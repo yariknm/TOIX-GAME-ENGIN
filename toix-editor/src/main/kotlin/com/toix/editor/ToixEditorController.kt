@@ -5,6 +5,7 @@ import com.toix.core.BlueprintComponent
 import com.toix.core.Transform
 import com.toix.core.TransformComponent
 import com.toix.core.World
+import com.toix.core.get
 import kotlin.math.min
 
 enum class EditorMode { EDIT, PLAYING }
