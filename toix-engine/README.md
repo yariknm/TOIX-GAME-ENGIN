@@ -44,12 +44,12 @@ toix-engine/
 
 **Физика** (`physics/`):
 - `BoxCollider` — AABB-коллайдер, `isTrigger`.
-- `RigidBody` — масса, скорость, гравитация, кинематический режим.
+- `RigidBody` — масса, скорость, гравитация, кинемаческий режим.
 - `CollisionManager` — проверка AABB-пересечений, импульс при столкновении.
 
 **Анимация** (`animation/`):
 - `AnimationClip`, `AnimationKeyframe` — клип и ключевой кадр.
-- `Animator` — проигрывание клипов, цикл, play/stop/addClip.
+- `Animator` — проигрывание клипов, цикл, play/stop, смешивание.
 
 **Сцены** (`scene/`):
 - `Scene` — группа актёров с именем.
@@ -69,7 +69,7 @@ toix-engine/
 **UI** (`ui/`):
 - `Rect`, `Color`, `UIElement`, `Canvas`, `TextElement`, `ButtonElement`.
 
-**Аудио** (`audio/`):
+**Audio** (`audio/`):
 - `AudioComponent`, `AudioSource`, `AudioListener`, `AudioMixer`.
 
 ### toix-editor
@@ -78,7 +78,7 @@ toix-engine/
 
 - `ToixEditorController` — связывает Outliner (выбор актёра), Details (свойства) и PIE.
 - Режимы: `EDIT`, `PLAYING`.
-- `play()` — снэпшот сцены → старт симуляции на копии, исходная сцена не 파괴ется.
+- `play()` — снэпшот сцены → старт симуляции на копии, исходная сцена не разрушается.
 - `stop()` — возврат в режим редактирования.
 - `stepFrame(dt)` — шаг симуляции в PIE с ограничением `maxDtSeconds`.
 - `inspectSelected()` — возвращает `DetailsEntry` с позицией и флагом наличия Blueprint.
@@ -134,7 +134,7 @@ cd toix-engine
 ## Дальнейшие шаги
 
 - Рендер и ввод: подключить реальный `RenderBackend` (OpenGL/Vulkan/Android) и передавать координаты касаний/мыши в `InputManager`.
-- Сериализация: расширить `WorldSerializer` на все компоненты и Blueprint-узлы.
+- Сериализация: расширить `WorldSerializer` на все компоненты и Blueprint-графы.
 - Экспорт на Android: подключить `com.android.application` + `com.android.library`, собрать `.apk` / `.aab`.
 - Редактор UI: визуальный редактор Blueprint-графов, иерархия актёров, инспектор свойств.
 - Физика: расширить `CollisionManager` до импульсов, триггеров, слоёв коллизий.
