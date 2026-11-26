@@ -44,12 +44,16 @@ toix-engine/
 
 **Физика** (`physics/`):
 - `BoxCollider` — AABB-коллайдер, `isTrigger`.
-- `RigidBody` — масса, скорость, гравитация, кинемаческий режим.
+- `RigidBody` — масса, скорость, гравитация, кинематический режим.
 - `CollisionManager` — проверка AABB-пересечений, импульс при столкновении.
 
 **Анимация** (`animation/`):
 - `AnimationClip`, `AnimationKeyframe` — клип и ключевой кадр.
 - `Animator` — проигрывание клипов, цикл, play/stop, смешивание.
+
+**Animation State Machine** (`animation/statemachine/`):
+- `AnimationState`, `AnimationTransition` — состояние и переход с условием.
+- `AnimationStateMachine` — смена состояний, кроссфейд, `AnimatorStateMachineComponent`.
 
 **Сцены** (`scene/`):
 - `Scene` — группа актёров с именем.
@@ -62,15 +66,36 @@ toix-engine/
 **Сериализация** (`serialization/`):
 - `WorldSerializer` — JSON-сериализация/десериализация мира, актёров, компонентов, Blueprint-графов. Без внешних зависимостей.
 
-**Ассеты** (`assets/`):
+**Ассеты** (`assets/`, `asset/`):
 - `Asset`, `TextureAsset`, `AudioAsset`, `PrefabAsset`.
 - `AssetManager` — кэш, загрузка, выгрузка, `AssetLoader`.
+- `AssetPipeline` — импорт (PNG/JPG, glTF/OBJ), кукинг, `AssetRegistry`.
+
+**Материалы** (`material/`):
+- `Shader` — вершинный и фрагментный код.
+- `MaterialParameterValue` — Float/Color/Vector2/Vector3/Texture.
+- `Material`, `BlendMode`, `MaterialComponent`.
 
 **UI** (`ui/`):
 - `Rect`, `Color`, `UIElement`, `Canvas`, `TextElement`, `ButtonElement`.
 
-**Audio** (`audio/`):
+**Audio** (`audio/`, `audio/dsp/`):
 - `AudioComponent`, `AudioSource`, `AudioListener`, `AudioMixer`.
+- `DspEffect`, `GainEffect`, `LowPassFilter`, `ReverbEffect`.
+- `AudioBus`, `SpatialAudioParams`, `SpatialAudioMixer` — 3D звук, громкость и пан по расстоянию.
+
+**World Partition** (`worldpartition/`):
+- `GridCell`, `WorldPartitionManager` — потоковая загрузка/выгрузка ячеек по радиусу камеры.
+- `HLODCluster`, `WorldPartitionComponent`.
+
+**Networking** (`networking/`):
+- `NetworkIdentity`, `RpcDescriptor`, `RpcType`, `ReplicationCondition`, `ReplicatedProperty`.
+- `ReplicationManager` — список репликации по соединению.
+- `NetworkedComponent`, `RpcCall`, `NetworkConnection`.
+
+**VFX / Частицы** (`vfx/`):
+- `ParticleModule` (Spawn/Velocity/Size/Color/Lifetime), `Particle`, `ParticleSystem`, `SimulationSpace`.
+- `ParticleSystemComponent` — симуляция частиц на тике.
 
 ### toix-editor
 
@@ -82,6 +107,11 @@ toix-engine/
 - `stop()` — возврат в режим редактирования.
 - `stepFrame(dt)` — шаг симуляции в PIE с ограничением `maxDtSeconds`.
 - `inspectSelected()` — возвращает `DetailsEntry` с позицией и флагом наличия Blueprint.
+
+### toix-editor/gui
+
+- `ToixEditorGui` — вьюпорт, аутлайнер, инспектор, плей/стоп/степфрейм.
+- `EditorWindow` — заглушка главного окна (Compose Desktop / Swing / Web).
 
 ### toix-runtime-android
 
@@ -112,16 +142,47 @@ fun main() {
 }
 ```
 
-## Начало работы
+## Как запустить
 
-Требуется JDK 17+.
+В репозитории **нет `gradlew`** (Gradle wrapper не привязан), поэтому запуск возможен через `kotlinc` напрямую.
+
+### Требования
+
+- **JDK 17+** (например, Temurin или OpenJDK 17)
+- **Kotlin 2.1.10** (`kotlinc`)
+
+### Установка инструментов
 
 ```bash
-cd toix-engine
-./gradlew :toix-sample:run
+# JDK 17
+sudo apt-get install -y openjdk-17-jdk-headless
+export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
+
+# Kotlin компилятор
+curl -sLO https://github.com/JetBrains/kotlin/releases/download/v2.1.10/kotlin-compiler-2.1.10.zip
+unzip kotlin-compiler-2.1.10.zip
+export PATH=$PWD/kotlin-compiler/kotlinc/bin:$PATH
 ```
 
-Ожидаемый вывод:
+### Компиляция
+
+Из корня репозитория (`/workspace/app`):
+
+```bash
+kotlinc -cp "$(find /path/to/kotlin-compiler/kotlinc/lib -name '*.jar' | tr '\n' ':')" \
+  $(find toix-core/src -name '*.kt') \
+  $(find toix-editor/src -name '*.kt') \
+  $(find toix-sample/src -name '*.kt') \
+  -include-runtime -d /tmp/kilo2/toix.jar
+```
+
+### Запуск демо
+
+```bash
+java -cp /tmp/kilo2/toix.jar com.toix.sample.Main
+```
+
+### Ожидаемый вывод
 
 ```
 До старта PIE: DetailsEntry(actorId=peon_1, actorName=Peon_01, x=0.0, y=0.0, hasBlueprint=true)
@@ -129,6 +190,15 @@ cd toix-engine
 [PIE] 40.0, 0.0
 Во время PIE: DetailsEntry(actorId=peon_1, actorName=Peon_01, x=40.0, y=0.0, hasBlueprint=true)
 После Stop (сцена восстановлена): DetailsEntry(actorId=peon_1, actorName=Peon_01, x=0.0, y=0.0, hasBlueprint=true)
+```
+
+### Через Gradle (опционально)
+
+Если нужно использовать Gradle, сгенерируйте обёртку:
+
+```bash
+gradle wrapper
+./gradlew :toix-sample:run
 ```
 
 ## Дальнейшие шаги
