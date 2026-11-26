@@ -20,11 +20,57 @@ toix-engine/
 
 Ядро движка, не зависит от редактора и целевой платформы.
 
-- `World` — хранит актёров, управляет циклом игры (`startPlay`, `tick`, `stopPlay`) и снэпшотами сцены.
-- `Actor` — сущность со списком компонентов (`TransformComponent`, `BlueprintComponent` и др.).
-- `Component` — интерфейс с хуками `onStart` / `onTick` / `snapshot`.
-- `BlueprintNode` — узел визуального скрипта с цепочкой `nextNodeId`. Реализации: `MoveByNode`, `LogPositionNode`.
-- `BlueprintComponent` — выполняет граф узлов каждый кадр с защитой от бесконечных циклов.
+- `World` — создание мира, спавн/поиск актёров (`findById`, `allActors`), контроль Play-цикла (`startPlay`, `tick`, `stopPlay`) и снэпшоты сцены.
+- `Actor` — сущность с набором компонентов (`TransformComponent`, `BlueprintComponent` и др.).
+- `Component` — интерфейс с хукерами `onStart` / `onTick` / `snapshot`.
+- `TransformComponent` — компонент позиционирования (Transform: x/y/z + scaleX/scaleY), копирование при снэпшоте.
+
+**Blueprint VM** (`Blueprint.kt`):
+- `BlueprintNode` — sealed interface с `id`, `nextNodeId`, `execute(actor, world, dt)`.
+- `MoveByNode` — перемещает актёра на `vx * dt` / `vy * dt`.
+- `LogPositionNode` — печатает позицию в теге.
+- `BlueprintComponent` — исполняет граф из `entryNodeId` по `nextNodeId`, с защитой от бесконечных циклов (`guard < 256`).
+
+**Рендер** (`render/`):
+- `Renderer` — собирает `DrawCommand` по всем актёрам с `SpriteRendererComponent`, сортирует по слою, передаёт в `RenderBackend`.
+- `Camera` — позиция, размер вьюпорта, ortho-проекция.
+- `SpriteRendererComponent` — спрайт, размер, цвет, видимость, слой.
+- `RenderBackend` — интерфейс бэкенда (OpenGL/Vulkan/Android), `MockRenderBackend` — заглушка для тестов.
+
+**Ввод** (`input/`):
+- `InputManager` — диспетчер событий, слушатели.
+- `InputComponent` — компонент на акторе для обработки ввода.
+- `InputEvent` / `InputType` — мышь, клавиатура, тач.
+
+**Физика** (`physics/`):
+- `BoxCollider` — AABB-коллайдер, `isTrigger`.
+- `RigidBody` — масса, скорость, гравитация, кинематический режим.
+- `CollisionManager` — проверка AABB-пересечений, импульс при столкновении.
+
+**Анимация** (`animation/`):
+- `AnimationClip`, `AnimationKeyframe` — клип и ключевой кадр.
+- `Animator` — проигрывание клипов, цикл, play/stop/addClip.
+
+**Сцены** (`scene/`):
+- `Scene` — группа актёров с именем.
+- `SceneManager` — загрузка/выгрузка, аддитивные сцены.
+
+**Префабы** (`prefab/`):
+- `Prefab` — шаблон актора.
+- `PrefabManager` — регистрация, инстанцирование.
+
+**Сериализация** (`serialization/`):
+- `WorldSerializer` — JSON-сериализация/десериализация мира, актёров, компонентов, Blueprint-графов. Без внешних зависимостей.
+
+**Ассеты** (`assets/`):
+- `Asset`, `TextureAsset`, `AudioAsset`, `PrefabAsset`.
+- `AssetManager` — кэш, загрузка, выгрузка, `AssetLoader`.
+
+**UI** (`ui/`):
+- `Rect`, `Color`, `UIElement`, `Canvas`, `TextElement`, `ButtonElement`.
+
+**Аудио** (`audio/`):
+- `AudioComponent`, `AudioSource`, `AudioListener`, `AudioMixer`.
 
 ### toix-editor
 
@@ -32,8 +78,8 @@ toix-engine/
 
 - `ToixEditorController` — связывает Outliner (выбор актёра), Details (свойства) и PIE.
 - Режимы: `EDIT`, `PLAYING`.
-- `play()` — делает снэпшот `editWorld`, запускает симуляцию на копии, не 파괴я исходную сцену.
-- `stop()` — восстанавливает режим редактирования.
+- `play()` — снэпшот сцены → старт симуляции на копии, исходная сцена не 파괴ется.
+- `stop()` — возврат в режим редактирования.
 - `stepFrame(dt)` — шаг симуляции в PIE с ограничением `maxDtSeconds`.
 - `inspectSelected()` — возвращает `DetailsEntry` с позицией и флагом наличия Blueprint.
 
@@ -85,8 +131,10 @@ cd toix-engine
 После Stop (сцена восстановлена): DetailsEntry(actorId=peon_1, actorName=Peon_01, x=0.0, y=0.0, hasBlueprint=true)
 ```
 
-## Weitere шаги
+## Дальнейшие шаги
 
-- Рендер и ввод: добавить `RenderComponent` (спрайт/тайл/меш) и подключить касания/мышь.
-- Сериализация: сохранение `World` и `BlueprintNode` в JSON/бинарный формат.
+- Рендер и ввод: подключить реальный `RenderBackend` (OpenGL/Vulkan/Android) и передавать координаты касаний/мыши в `InputManager`.
+- Сериализация: расширить `WorldSerializer` на все компоненты и Blueprint-узлы.
 - Экспорт на Android: подключить `com.android.application` + `com.android.library`, собрать `.apk` / `.aab`.
+- Редактор UI: визуальный редактор Blueprint-графов, иерархия актёров, инспектор свойств.
+- Физика: расширить `CollisionManager` до импульсов, триггеров, слоёв коллизий.
