@@ -7,6 +7,10 @@ class Actor(
 ) {
     fun add(component: Component): Actor = apply { components += component }
 
+    val transform: Transform
+        get() = components.firstOrNull { it is TransformComponent }?.let { (it as TransformComponent).transform }
+            ?: TransformComponent().transform
+
     fun allComponents(): List<Component> = components
 
     fun start(world: World) = components.forEach { it.onStart(this, world) }
